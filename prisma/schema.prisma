@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -10,42 +10,116 @@ generator client {
 // models examples
 model User {
   id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
   email     String    @unique
-  name      String?
+  name      String
+  username  String
   password  String
-  posts     Post[]
-  group     Group?    @relation(fields: [groupId], onDelete: SetNull, references: [id])
-  groupId   Int?
-  comments  Comment[]
-}
+  address   String  
 
-model Post {
-  id        Int       @id @default(autoincrement())
-  published Boolean   @default(false)
-  title     String
-  author    User?     @relation(fields: [authorId], onDelete: Cascade, references: [id])
-  authorId  Int?
-  comments  Comment[]
+  isAdmin  Boolean   @default(false)
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  balance Float       @default(0)
+
+
+  
+
+
+  userLoans  UserLoan[]
+
+  transactions Transaction[]
+
 }
 
-model Comment {
-  id        Int      @id @default(autoincrement())
-  contain   String
-  post      Post     @relation(fields: [postId], onDelete: Cascade, references: [id])
-  postId    Int
-  author    User?    @relation(fields: [authorId], onDelete: SetNull, references: [id])
-  authorId  Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Transaction {
+
+
+  id        Int       @id @default(autoincrement())
+  amount    Float
+  type      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  userId Int 
+  user User @relation(fields: [userId], references: [id])
+
 }
 
-model Group {
-  id        Int      @id @default(autoincrement())
-  name      String
+enum LoanStatus{
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model UserLoan {
+
+
+  id        Int       @id @default(autoincrement())
+  userId    Int       
+  user User @relation(fields: [userId], references: [id])
+  bookId    Int
+  book    Book       @relation(fields: [bookId], references: [id])
+
+
+  loanExpiredAt DateTime 
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  price Int @default(0)
+
+  status LoanStatus @default(PENDING)
+
+
+
+
+}
+
+model Book {
+
+  id Int @id @default(autoincrement())
+
+  title String
+
+  cover String?
+
+  authorId  Int 
+  author Author @relation(fields: [authorId], references: [id])
+  
+  price Int @default(0)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
+
+  categories Category[] 
+
+  UserLoan UserLoan[]
+}
+
+
+model Category{
+
+
+  id Int @id @default(autoincrement())
+
+  name String
+
+  books Book[] 
+
+}
+
+model Author{
+
+  id Int @id @default(autoincrement())
+
+  name String
+
+  books Book[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
